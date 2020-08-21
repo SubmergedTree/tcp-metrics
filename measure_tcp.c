@@ -35,7 +35,6 @@ int set_mptcp_parameters(int socket, tcp_measurement *test) {
 
     if (test->mptcp_congestion_control != NULL)
         if (setsockopt(socket, IPPROTO_TCP, TCP_CONGESTION, test->mptcp_congestion_control, sizeof(test->mptcp_congestion_control)) < 0) {
-            i_errno = IEMPTCPNOTLOADEDCC;
             return -1;
         }
     return 0;
