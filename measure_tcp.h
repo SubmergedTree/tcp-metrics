@@ -37,6 +37,9 @@ typedef struct tcp_measurement
 	int measure_bw_b;  // measure bandwidth with option 2
 	int measure_rtt;   // measure rtt
 
+    int mptcp_enabled;
+    char *mptcp_congestion_control;
+
 } tcp_measurement;
 
 /*

@@ -34,6 +34,8 @@ static struct argp_option options[] = {
 	{ "bandwidth-method-B", 'c', 0, 0, "Measure the bandwidth with option 2, meaning we measure beginning from the first socket.read() operation."},
 	{ "all", 'a', 0, 0, "Measure everything - option1 + option2 + rtt."},
 	{ "v", 'v', 0, 0, "Verbose - print subsequent estimates to stdout."},
+    { "congestion_control", 'x', "<cubic, olia, balia, wvegas>", 0, "cc algo"},
+    { "mptcp_enabled", 'y', "<1 0>", 0, "enable mptcp"},
     { 0 } 
 };
 
@@ -52,6 +54,9 @@ struct arguments
 	int bwb;
 	int all;
 	int verbose;
+
+    int mptcp_enabled;
+    char *mptcp_congestion_control;
 };
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state)
@@ -71,8 +76,10 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
 		case 'c': arguments->bwb = 1; break;
 		case 'a': arguments->all = 1; break;
 		case 'v': arguments->verbose = 1; break;
+		case 'x': arguments->mptcp_congestion_control= arg; break;
+        case 'y': arguments->mptcp_enabled = atoi(arg); break;
 
-		case ARGP_KEY_ARG:
+        case ARGP_KEY_ARG:
 			if(state->arg_num > 2)
 			{
 				argp_usage(state);
@@ -116,6 +123,8 @@ int main(int argc, char *argv[])
 	arguments.bwb = 0;
 	arguments.rtt = 0;
 	arguments.all = 0;
+	arguments.mptcp_enabled = 1;
+	arguments.mptcp_congestion_control = "cubic";
 
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
@@ -147,7 +156,9 @@ int main(int argc, char *argv[])
 	msrmnt.verbose = arguments.verbose;
 	msrmnt.measure_bw_a = arguments.bwa;
 	msrmnt.measure_bw_b = arguments.bwb;
-	msrmnt.measure_rtt = arguments.rtt;	
+	msrmnt.measure_rtt = arguments.rtt;
+	msrmnt.mptcp_congestion_control = arguments.mptcp_congestion_control;
+	msrmnt.mptcp_enabled = arguments.mptcp_enabled;
 
 	// measure
 	measure_tcp_metrics(&msrmnt);

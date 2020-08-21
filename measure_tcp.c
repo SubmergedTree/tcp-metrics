@@ -16,8 +16,30 @@
 #include <netdb.h>
 #include <string.h>
 #include <unistd.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 
 #include "measure_tcp.h"
+
+int set_mptcp_parameters(int socket, tcp_measurement *test) {
+#ifndef SOL_TCP
+#error SOL_TCP is not defined. Multipath TCP configuration will not work.
+#endif
+#ifndef TCP_CONGESTION
+#error TCP_CONGESTION is not defined. Multipath TCP configuration will not work.
+#endif
+#define MPTCP_ENABLED 42
+#define MPTCP_SCHEDULER 43
+    if (setsockopt(socket, SOL_TCP, MPTCP_ENABLED, &test->mptcp_enabled, sizeof(test->mptcp_enabled)) < 0)
+        return -1;
+
+    if (test->mptcp_congestion_control != NULL)
+        if (setsockopt(socket, IPPROTO_TCP, TCP_CONGESTION, test->mptcp_congestion_control, sizeof(test->mptcp_congestion_control)) < 0) {
+            i_errno = IEMPTCPNOTLOADEDCC;
+            return -1;
+        }
+    return 0;
+}
 
 double timeval_subtract(struct timeval *x, struct timeval *y)  
 {  
@@ -101,7 +123,9 @@ int create_tcp_connection(tcp_measurement *msrmnt)
 		return -1;
 	}
 
-	// find server
+    set_mptcp_parameters(sock, msrmnt);
+
+    // find server
 	struct hostent *server;
 	server = gethostbyname(msrmnt->domain);
 	if(server == NULL)
